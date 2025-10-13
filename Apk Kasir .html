@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kasir Sederhana</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #4CAF50; color: white; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .hapus { background: #f44336; width: 80px; }
+        .reset { background: #ff9800; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total { font-size: 18px; font-weight: bold; color: #333; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Aplikasi Kasir Sederhana</h1>
+        
+        <!-- Form Input Item -->
+        <div>
+            <input type="text" id="namaItem" placeholder="Nama Item (misal: Kopi)" required>
+            <input type="number" id="hargaItem" placeholder="Harga (Rp)" min="0" step="100" required>
+            <input type="number" id="qtyItem" placeholder="Jumlah" min="1" value="1" required>
+            <button onclick="tambahItem()">Tambah Item</button>
+        </div>
+
+        <!-- Tabel Keranjang -->
+        <table id="tabelKeranjang">
+            <thead>
+                <tr>
+                    <th>Nama Item</th>
+                    <th>Harga/Unit</th>
+                    <th>Jumlah</th>
+                    <th>Subtotal</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyKeranjang">
+                <!-- Item akan ditambahkan di sini via JS -->
+            </tbody>
+        </table>
+
+        <!-- Total -->
+        <div class="total" id="totalBayar">Total: Rp 0</div>
+        
+        <button class="reset" onclick="resetKeranjang()" style="margin-top: 10px;">Reset Keranjang</button>
+    </div>
+
+    <script>
+        let keranjang = JSON.parse(localStorage.getItem('keranjang')) || [];  // Ambil data dari storage
+
+        // Fungsi tambah item
+        function tambahItem() {
+            const nama = document.getElementById('namaItem').value.trim();
+            const harga = parseFloat(document.getElementById('hargaItem').value);
+            const qty = parseInt(document.getElementById('qtyItem').value);
+
+            if (!nama || isNaN(harga) || isNaN(qty) || harga <= 0 || qty <= 0) {
+                alert('Isi data dengan benar!');
+                return;
+            }
+
+            const item = { nama, harga, qty, subtotal: harga * qty };
+            keranjang.push(item);
+
+            // Simpan ke localStorage
+            localStorage.setItem('keranjang', JSON.stringify(keranjang));
+
+            // Kosongkan input
+            document.getElementById('namaItem').value = '';
+            document.getElementById('hargaItem').value = '';
+            document.getElementById('qtyItem').value = 1;
+
+            // Update tampilan
+            tampilkanKeranjang();
+        }
+
+        // Fungsi tampilkan keranjang
+        function tampilkanKeranjang() {
+            const tbody = document.getElementById('tbodyKeranjang');
+            tbody.innerHTML = '';
+
+            let total = 0;
+            keranjang.forEach((item, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${item.nama}</td>
+                    <td>Rp ${item.harga.toLocaleString()}</td>
+                    <td>${item.qty}</td>
+                    <td>Rp ${item.subtotal.toLocaleString()}</td>
+                    <td><button class="hapus" onclick="hapusItem(${index})">Hapus</button></td>
+                `;
+                total += item.subtotal;
+            });
+
+            document.getElementById('totalBayar').textContent = `Total: Rp ${total.toLocaleString()}`;
+        }
+
+        // Fungsi hapus item
+        function hapusItem(index) {
+            keranjang.splice(index, 1);
+            localStorage.setItem('keranjang', JSON.stringify(keranjang));
+            tampilkanKeranjang();
+        }
+
+        // Fungsi reset keranjang
+        function resetKeranjang() {
+            if (confirm('Kosongkan keranjang?')) {
+                keranjang = [];
+                localStorage.removeItem('keranjang');
+                tampilkanKeranjang();
+            }
+        }
+
+        // Load data saat halaman dibuka
+        tampilkanKeranjang();
+
+        // Enter key untuk tambah item (opsional)
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                tambahItem();
+            }
+        });
+    </script>
+</body>
+</html>
